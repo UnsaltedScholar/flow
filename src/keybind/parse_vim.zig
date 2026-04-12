@@ -50,6 +50,22 @@ fn parse_error(e: ParseError, comptime format: anytype, args: anytype) ParseErro
     return e;
 }
 
+fn is_special_binding_start(str: []const u8, i: usize) bool {
+    if (i + 1 >= str.len) return false;
+
+    return switch (str[i + 1]) {
+        'A', 'F', 'T', 'U', 'R', 'G', 'I', 'B', 'H' => true,
+
+        'C' => i + 2 < str.len and (str[i + 2] == 'R' or str[i + 2] == '-'),
+        'S' => i + 2 < str.len and (str[i + 2] == '-' or str[i + 2] == 'p'),
+        'L' => i + 2 < str.len and (str[i + 2] == 'e' or str[i + 2] == 'T'),
+        'E' => i + 2 < str.len and (str[i + 2] == 's' or str[i + 2] == 'n'),
+        'D' => i + 2 < str.len and (str[i + 2] == 'o' or str[i + 2] == '-' or str[i + 2] == 'e'),
+
+        else => false,
+    };
+}
+
 pub fn parse_key_events(allocator: std.mem.Allocator, str: []const u8) ParseError![]input.KeyEvent {
     const from_key = input.KeyEvent.from_key;
     const from_key_mods = input.KeyEvent.from_key_mods;
@@ -90,16 +106,23 @@ pub fn parse_key_events(allocator: std.mem.Allocator, str: []const u8) ParseErro
             // zig fmt: off
             .base => {
                 switch (str[i]) {
+                    // zig fmt: on
                     '<' => {
-                        state = .escape_sequence_start;
-                        i += 1;
+                        if (is_special_binding_start(str, i)) {
+                            state = .escape_sequence_start;
+                            i += 1;
+                        } else {
+                            try result.append(allocator, from_key('<'));
+                            i += 1;
+                        }
                     },
+                    // zig fmt: off
                     //lowercase characters
                     'A'...'Z',
                     'a'...'z',
                     '0'...'9',
                     '!', '@', '#', '$', '%', '^', '&', '*', '(', ')',
-                    '`', '~', '-', '_', '=', '+', '[', ']', '{', '}', '\\', '|', ':', ';', '\'', '"', ',', '.', '/', '?', => {
+                    '`', '~', '-', '_', '=', '+', '[', ']', '{', '}', '\\', '|', ':', ';', '\'', '"', ',', '.', '/', '?', '>', => {
                         try result.append(allocator, from_key(str[i]));
                         i += 1;
                     },
