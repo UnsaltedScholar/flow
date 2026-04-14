@@ -54,6 +54,7 @@ indent_size: usize = 4,
 tab_width: usize = 8,
 indent_mode: IndentMode = .auto,
 reflow_width: usize = 76,
+soft_wrap: bool = false,
 
 top_bar: []const u8 = "tabs",
 bottom_bar: []const u8 = "mode file log selection diagnostics keybind branch linenumber clock spacer",
